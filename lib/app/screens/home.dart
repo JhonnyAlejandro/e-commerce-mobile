@@ -1,12 +1,30 @@
-import 'package:e_commerce_mobile/app/screens/statistics.dart';
+import 'dart:io';
+
+import 'package:e_commerce_mobile/app/api/connection.dart';
 import 'package:e_commerce_mobile/app/screens/widgets/button.dart';
 import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
 
   @override
   State<Home> createState() => _HomeState();
+}
+
+Future<void> downloadPDF(String route, String fileName) async {
+  final response = await http.get(Uri.parse(url + route));
+
+  if(response.statusCode == 200) {
+    final bytes = response.bodyBytes;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(bytes, flush: true);
+  } else {
+    throw Exception('Error al descargar PDF - Código de estado: ${response.statusCode}');
+  }
 }
 
 class _HomeState extends State<Home> {
@@ -58,20 +76,6 @@ class _HomeState extends State<Home> {
           Column(
             children: [
               Button(
-                icon: Icons.bar_chart,
-                background: Colors.blue,
-                text: 'Gráficas y estadísticas',
-                action: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Statistics(),
-                    )
-                  );
-                }
-              ),
-              const SizedBox(height: 25),
-              Button(
                 icon: Icons.description,
                 background: Colors.blue,
                 text: 'Informes',
@@ -87,7 +91,9 @@ class _HomeState extends State<Home> {
                               icon: Icons.shopping_cart,
                               background: Colors.blue,
                               text: 'Ventas',
-                              action: () {}
+                              action: () async {
+                                await downloadPDF('/sales', 'ventas.pdf');
+                              }
                             ),
                             const SizedBox(height: 25),
                             Button(
